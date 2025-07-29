@@ -6,9 +6,10 @@ from datetime import datetime
 from models import BugReport
 from bug_report_service import BugReportTriageService
 
+
 def create_sample_bug_reports():
     """Create sample bug reports for demonstration"""
-    
+
     bug_reports = [
         BugReport(
             id="BUG-001",
@@ -20,11 +21,10 @@ def create_sample_bug_reports():
             expected_behavior="Login page should load normally and allow user authentication",
             actual_behavior="Page crashes with a JavaScript error and becomes unresponsive",
             attachments=["crash_log.txt", "screenshot.png"],
-            metadata={"user_agent": "Mobile", "crash_count": 15, "affected_users": 230}
+            metadata={"user_agent": "Mobile", "crash_count": 15, "affected_users": 230},
         ),
-        
         BugReport(
-            id="BUG-002", 
+            id="BUG-002",
             title="Database connection timeout during peak hours",
             description="Users experience slow response times and timeout errors during peak usage hours (12-2 PM and 6-8 PM daily).",
             reporter="admin@example.com",
@@ -33,87 +33,91 @@ def create_sample_bug_reports():
             expected_behavior="Database queries should complete within 2-3 seconds",
             actual_behavior="Queries timeout after 30 seconds, causing 500 errors",
             attachments=["server_logs.log", "database_metrics.csv"],
-            metadata={"error_rate": "25%", "affected_endpoints": ["/api/users", "/api/orders"], "peak_load": "500 concurrent users"}
+            metadata={
+                "error_rate": "25%",
+                "affected_endpoints": ["/api/users", "/api/orders"],
+                "peak_load": "500 concurrent users",
+            },
         ),
-        
         BugReport(
             id="BUG-003",
             title="Typo in checkout button text",
             description="The checkout button displays 'Procced to Payment' instead of 'Proceed to Payment'.",
-            reporter="qa.team@example.com", 
+            reporter="qa.team@example.com",
             environment="All browsers, production website",
             steps_to_reproduce="1. Add items to cart\n2. Go to checkout page\n3. Observe button text",
             expected_behavior="Button should display 'Proceed to Payment'",
             actual_behavior="Button displays 'Procced to Payment' with typo",
             attachments=["button_screenshot.png"],
-            metadata={"page": "/checkout", "component": "payment_button"}
-        )
+            metadata={"page": "/checkout", "component": "payment_button"},
+        ),
     ]
-    
+
     return bug_reports
+
 
 def demo_service():
     """Demonstrate the bug report triage service"""
-    
+
     print("=" * 60)
     print("Bug Report Triage Service Demonstration")
     print("=" * 60)
-    
+
     # Create the service instance
     service = BugReportTriageService()
-    
+
     try:
         # Note: This would normally start the service in background
         # For demo purposes, we'll show how it would work
         print("\n1. Initializing service components...")
         service.initialize_agents()
-        service.initialize_consumers() 
-        
+        service.initialize_consumers()
+
         print("✓ Agents initialized:")
         for name, agent in service.agents.items():
             print(f"  - {agent.agent_name}")
-        
+
         print("✓ Kafka consumers configured for topics:")
         for name, consumer in service.consumers.items():
             print(f"  - {name}: {consumer.topics}")
-        
+
         # Create sample bug reports
         print("\n2. Creating sample bug reports...")
         bug_reports = create_sample_bug_reports()
-        
+
         for i, bug_report in enumerate(bug_reports, 1):
             print(f"  Bug Report {i}: {bug_report.title}")
-        
+
         # Simulate processing
         print("\n3. Processing workflow simulation...")
         print("   (In real usage, this would be done via Kafka messaging)")
-        
+
         for bug_report in bug_reports:
             print(f"\n   Processing: {bug_report.title}")
-            
+
             # Show triage analysis simulation
             print("   ├─ Triage Agent: Analyzing bug report...")
-            print("   │  ├─ Priority assessment: Based on impact and urgency")  
+            print("   │  ├─ Priority assessment: Based on impact and urgency")
             print("   │  ├─ Severity classification: Based on system impact")
             print("   │  └─ Category assignment: Based on affected component")
-            
+
             # Show ticket creation simulation
             print("   ├─ Ticket Creation Agent: Formatting GitHub issue...")
             print("   │  ├─ Creating descriptive title")
             print("   │  ├─ Formatting issue body with markdown")
             print("   │  └─ Adding labels and assignees")
-            
+
             # Show GitHub API simulation
             print("   ├─ GitHub API Agent: Creating issue...")
             print("   │  ├─ Preparing API payload")
             print("   │  ├─ Making API call (mocked)")
             print("   │  └─ Issue created successfully")
-            
+
             # Show coordinator update
             print("   └─ Coordinator: Updating request status")
-            
+
             time.sleep(1)  # Simulate processing time
-        
+
         print("\n4. Service capabilities:")
         print("   ✓ LangChain integration for intelligent triage")
         print("   ✓ OpenAI GPT-4 for analysis and content generation")
@@ -122,23 +126,23 @@ def demo_service():
         print("   ✓ GitHub API integration for issue creation")
         print("   ✓ Comprehensive error handling and monitoring")
         print("   ✓ Scalable agent-based architecture")
-        
+
         print("\n5. Sample triage results:")
-        
+
         # Show example triage output for first bug
         sample_triage = {
             "bug_id": "BUG-001",
             "priority": "high",
-            "severity": "major", 
+            "severity": "major",
             "category": "frontend",
             "labels": ["bug", "mobile", "crash", "urgent"],
             "estimated_effort": "medium",
-            "triage_notes": "Critical mobile compatibility issue affecting significant user base. Requires immediate attention from frontend team."
+            "triage_notes": "Critical mobile compatibility issue affecting significant user base. Requires immediate attention from frontend team.",
         }
-        
+
         print(f"   Bug Report: {bug_reports[0].title}")
         print(f"   └─ {json.dumps(sample_triage, indent=6)}")
-        
+
         print("\n6. GitHub issue example:")
         sample_github_issue = {
             "title": "🐛 Login page crashes on mobile devices",
@@ -172,31 +176,33 @@ Page crashes with a JavaScript error and becomes unresponsive
 - **Category:** Frontend
 - **Estimated Effort:** Medium
 
-Critical mobile compatibility issue affecting significant user base. Requires immediate attention from frontend team."""
+Critical mobile compatibility issue affecting significant user base. Requires immediate attention from frontend team.""",
         }
-        
+
         print(f"   Title: {sample_github_issue['title']}")
         print(f"   Labels: {sample_github_issue['labels']}")
         print("   Body: [Well-formatted markdown issue description]")
-        
+
     except Exception as e:
         print(f"Demo error: {e}")
     finally:
         # Cleanup
         service.stop_service()
-    
+
     print("\n" + "=" * 60)
     print("Demo completed! Service is ready for production use.")
     print("=" * 60)
 
+
 def show_usage_instructions():
     """Show how to use the service in production"""
-    
+
     print("\n" + "=" * 60)
     print("PRODUCTION USAGE INSTRUCTIONS")
     print("=" * 60)
-    
-    print("""
+
+    print(
+        """
 1. SETUP REQUIREMENTS:
    - Kafka cluster running on localhost:9092 (or configure KAFKA_BOOTSTRAP_SERVERS)
    - Redis server running on localhost:6379 (or configure REDIS_URL)  
@@ -259,11 +265,13 @@ def show_usage_instructions():
    - Flexible: Easy to add new agents or modify workflow
    - Observable: Comprehensive logging and status tracking
    - Intelligent: LangChain + OpenAI for smart triage decisions
-""")
+"""
+    )
+
 
 if __name__ == "__main__":
     # Run the demonstration
     demo_service()
-    
+
     # Show usage instructions
     show_usage_instructions()
