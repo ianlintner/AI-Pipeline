@@ -19,6 +19,7 @@ class BaseAgent(ABC):
         self.llm = ChatOpenAI(
             model=Config.OPENAI_MODEL,
             temperature=0.1,
+            openai_api_key=Config.OPENAI_API_KEY,
         )
         self.kafka_producer = KafkaProducerManager()
         self.state_manager = StateManager()

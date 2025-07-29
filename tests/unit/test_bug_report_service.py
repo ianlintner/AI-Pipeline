@@ -71,8 +71,9 @@ class TestBugReportTriageService:
         # Verify consumer was created with correct parameters
         assert mock_consumer_class.call_count == 4
 
-    @patch("threading.Thread")
-    def test_start_service(self, mock_thread, service):
+    @patch("bug_report_service.threading.Thread")
+    @patch("bug_report_service.threading.Event")
+    def test_start_service(self, mock_event_class, mock_thread, service):
         """Test starting the service"""
         mock_thread_instance = Mock()
         mock_thread.return_value = mock_thread_instance
@@ -83,12 +84,13 @@ class TestBugReportTriageService:
         service.coordinator = Mock()
         service.consumers = {"test": Mock()}
 
-        # Mock threading.Event to avoid blocking
-        with patch("threading.Event") as mock_event:
-            mock_event.return_value.wait.side_effect = KeyboardInterrupt()
+        # Mock threading.Event to raise KeyboardInterrupt on wait
+        mock_event_instance = Mock()
+        mock_event_class.return_value = mock_event_instance
+        mock_event_instance.wait.side_effect = KeyboardInterrupt()
 
-            with pytest.raises(KeyboardInterrupt):
-                service.start_service()
+        # The KeyboardInterrupt should be caught and handled gracefully
+        service.start_service()
 
         # Verify initialization was called
         service.initialize_agents.assert_called_once()
@@ -276,8 +278,10 @@ class TestBugReportTriageService:
         assert "error" in health
 
     @patch("signal.signal")
-    def test_signal_handler_setup(self, mock_signal):
+    @patch("bug_report_service.CoordinatorAgent")
+    def test_signal_handler_setup(self, mock_coordinator, mock_signal):
         """Test signal handlers are set up during initialization"""
+        mock_coordinator.return_value = Mock()
         service = BugReportTriageService()
 
         # Verify signal handlers were registered
