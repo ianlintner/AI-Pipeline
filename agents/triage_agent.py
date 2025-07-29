@@ -1,9 +1,10 @@
 import json
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from agents.base_agent import BaseAgent
-from models import BugReport, TriageResult, Priority, Severity, TicketStatus
 from config import Config
+from models import BugReport, Priority, Severity, TicketStatus, TriageResult
 
 logger = logging.getLogger(__name__)
 

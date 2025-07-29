@@ -1,16 +1,18 @@
-import pytest
 from datetime import datetime
+
+import pytest
 from pydantic import ValidationError
+
 from models import (
     BugReport,
-    TriageResult,
     GitHubIssue,
-    TicketCreationRequest,
-    RequestState,
-    StatusUpdate,
     Priority,
+    RequestState,
     Severity,
+    StatusUpdate,
+    TicketCreationRequest,
     TicketStatus,
+    TriageResult,
 )
 
 

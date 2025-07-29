@@ -1,12 +1,13 @@
 import logging
-import threading
 import signal
 import sys
-from typing import Dict, Any, List, Optional
-from kafka_utils import KafkaConsumerManager
-from agents import TriageAgent, TicketCreationAgent, GitHubAPIAgent, CoordinatorAgent
-from models import BugReport
+import threading
+from typing import Any, Dict, List, Optional
+
+from agents import CoordinatorAgent, GitHubAPIAgent, TicketCreationAgent, TriageAgent
 from config import Config
+from kafka_utils import KafkaConsumerManager
+from models import BugReport
 
 # Configure logging
 logging.basicConfig(

@@ -6,9 +6,9 @@ This script provides a convenient way to run different types of tests
 and code quality checks locally before pushing to CI.
 """
 
+import argparse
 import subprocess
 import sys
-import argparse
 from pathlib import Path
 
 

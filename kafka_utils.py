@@ -1,8 +1,10 @@
 import json
 import logging
-from typing import Dict, Any, Callable, Optional
-from kafka import KafkaProducer, KafkaConsumer
+from typing import Any, Callable, Dict, Optional
+
+from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
+
 from config import Config
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,8 @@
-import pytest
 import time
 from unittest.mock import Mock, patch
+
+import pytest
+
 from bug_report_service import BugReportTriageService
 from models import BugReport, Priority, Severity, TicketStatus
 

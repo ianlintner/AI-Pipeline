@@ -2,10 +2,11 @@ import json
 import logging
 import threading
 import time
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from agents.base_agent import BaseAgent
-from models import BugReport, StatusUpdate, TicketStatus
 from config import Config
+from models import BugReport, StatusUpdate, TicketStatus
 
 logger = logging.getLogger(__name__)
 

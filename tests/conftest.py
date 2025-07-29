@@ -1,9 +1,11 @@
-import pytest
-import fakeredis
-from unittest.mock import Mock, patch
 from datetime import datetime
-from models import BugReport, TriageResult, Priority, Severity, TicketStatus
+from unittest.mock import Mock, patch
+
+import fakeredis
+import pytest
+
 from config import Config
+from models import BugReport, Priority, Severity, TicketStatus, TriageResult
 
 
 @pytest.fixture

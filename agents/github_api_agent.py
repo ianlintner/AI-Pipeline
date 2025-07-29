@@ -1,10 +1,12 @@
 import json
 import logging
+from typing import Any, Dict, Optional
+
 import requests
-from typing import Dict, Any, Optional
+
 from agents.base_agent import BaseAgent
-from models import TicketCreationRequest, TicketStatus
 from config import Config
+from models import TicketCreationRequest, TicketStatus
 
 logger = logging.getLogger(__name__)
 

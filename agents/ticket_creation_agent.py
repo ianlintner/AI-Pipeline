@@ -1,15 +1,16 @@
 import json
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from agents.base_agent import BaseAgent
+from config import Config
 from models import (
     BugReport,
-    TriageResult,
     GitHubIssue,
     TicketCreationRequest,
     TicketStatus,
+    TriageResult,
 )
-from config import Config
 
 logger = logging.getLogger(__name__)
 

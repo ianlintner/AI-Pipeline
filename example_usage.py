@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import time
 import json
+import time
 from datetime import datetime
-from models import BugReport
+
 from bug_report_service import BugReportTriageService
+from models import BugReport
 
 
 def create_sample_bug_reports():

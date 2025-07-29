@@ -1,10 +1,12 @@
 import json
-import redis
 import logging
-from typing import Optional, Dict, Any
 from datetime import datetime
-from models import RequestState, TicketStatus
+from typing import Any, Dict, Optional
+
+import redis
+
 from config import Config
+from models import RequestState, TicketStatus
 
 logger = logging.getLogger(__name__)
 

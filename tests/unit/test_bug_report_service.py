@@ -1,5 +1,7 @@
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
 from bug_report_service import BugReportTriageService
 from models import BugReport, TicketStatus
 
