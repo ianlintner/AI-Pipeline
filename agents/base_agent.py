@@ -3,8 +3,8 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import BaseMessage, HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from config import Config
 from kafka_utils import KafkaProducerManager
