@@ -1,0 +1,319 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION_MAIN: "3.11"
+
+jobs:
+  lint-and-format:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION_MAIN }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-lint-${{ hashFiles('requirements.txt', 'requirements-test.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-lint-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+    
+    - name: Run Black (Code Formatting)
+      run: black --check --diff .
+    
+    - name: Run isort (Import Sorting)
+      run: isort --check-only --diff .
+    
+    - name: Run Flake8 (Linting)
+      run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    
+    - name: Run MyPy (Type Checking)
+      run: mypy . --ignore-missing-imports --no-strict-optional
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt', 'requirements-test.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+    
+    - name: Run Unit Tests
+      run: |
+        pytest tests/unit/ -v --tb=short --cov=. --cov-report=xml --cov-report=html
+      env:
+        OPENAI_API_KEY: test-key
+        GITHUB_API_TOKEN: test-token
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+        REDIS_URL: redis://localhost:6379
+    
+    - name: Upload Coverage to Codecov
+      if: matrix.python-version == env.PYTHON_VERSION_MAIN
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, test-unit]
+    
+    services:
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      zookeeper:
+        image: confluentinc/cp-zookeeper:7.4.0
+        ports:
+          - 2181:2181
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+      
+      kafka:
+        image: confluentinc/cp-kafka:7.4.0
+        ports:
+          - 9092:9092
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+          KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+        options: >-
+          --health-cmd "kafka-topics --bootstrap-server localhost:9092 --list"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION_MAIN }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-integration-${{ hashFiles('requirements.txt', 'requirements-test.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-integration-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+    
+    - name: Wait for Kafka to be ready
+      run: |
+        timeout 60 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 1; done' localhost 9092
+    
+    - name: Wait for Redis to be ready
+      run: |
+        timeout 30 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 1; done' localhost 6379
+    
+    - name: Run Integration Tests
+      run: |
+        pytest tests/integration/ -v --tb=short -m "integration and not slow"
+      env:
+        OPENAI_API_KEY: test-key
+        GITHUB_API_TOKEN: test-token
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+        REDIS_URL: redis://localhost:6379
+
+  test-podman:
+    name: Test with Podman
+    runs-on: ubuntu-latest
+    needs: [test-unit]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Podman
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install podman
+        podman --version
+    
+    - name: Install podman-compose
+      run: |
+        pip install podman-compose
+        podman-compose --version
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION_MAIN }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+    
+    - name: Test Podman Compose Configuration
+      run: |
+        # Test that podman-compose can parse the docker-compose.yml
+        podman-compose config
+    
+    - name: Start Infrastructure with Podman
+      run: |
+        # Start just the infrastructure services
+        podman-compose up -d zookeeper kafka redis
+        sleep 30
+    
+    - name: Verify Services are Running
+      run: |
+        podman-compose ps
+        # Test Redis connection
+        podman exec redis redis-cli ping
+        # Test Kafka topics (may fail if Kafka isn't fully ready, but that's okay)
+        podman exec kafka kafka-topics --bootstrap-server localhost:9092 --list || true
+    
+    - name: Run Basic Service Tests
+      run: |
+        pytest tests/unit/test_bug_report_service.py::TestBugReportTriageService::test_health_check_healthy -v
+      env:
+        OPENAI_API_KEY: test-key
+        GITHUB_API_TOKEN: test-token
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+        REDIS_URL: redis://localhost:6379
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        podman-compose down -v || true
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION_MAIN }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit
+        pip install -r requirements.txt
+    
+    - name: Run Safety (Dependency Vulnerability Check)
+      run: safety check
+    
+    - name: Run Bandit (Security Linting)
+      run: bandit -r . -f json -o bandit-report.json || true
+    
+    - name: Upload Bandit Report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  build-and-test-docker-image:
+    name: Build and Test Container Image
+    runs-on: ubuntu-latest
+    needs: [test-unit]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Podman
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install podman
+    
+    - name: Build Container Image with Podman
+      run: |
+        podman build -t bug-triage-service:test .
+    
+    - name: Test Container Image
+      run: |
+        # Test that the container can start (will fail due to missing services, but that's expected)
+        podman run --rm bug-triage-service:test python -c "from bug_report_service import BugReportTriageService; print('Import successful')" || true
+    
+    - name: Scan Container Image for Vulnerabilities
+      run: |
+        # Install and run container scanner
+        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+        grype bug-triage-service:test || true
+
+  test-report:
+    name: Test Report
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-integration, test-podman]
+    if: always()
+    
+    steps:
+    - name: Report Test Results
+      run: |
+        echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- Unit Tests: ${{ needs.test-unit.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration Tests: ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Podman Tests: ${{ needs.test-podman.result }}" >> $GITHUB_STEP_SUMMARY

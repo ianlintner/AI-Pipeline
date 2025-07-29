@@ -214,3 +214,16 @@ yarn-error.log*
 
 # Git
 .git/
+
+# Test and coverage artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+bandit-report.json
+.mypy_cache/
+
+# IDE and editor files
+*.swp
+*.swo
+.vscode/settings.json.bak

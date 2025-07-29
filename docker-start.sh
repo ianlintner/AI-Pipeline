@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Bug Report Triage Service - Docker Start Script
+# Bug Report Triage Service - Podman Start Script
 
 set -e
 
@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🐳 Bug Report Triage Service - Docker Setup${NC}"
+echo -e "${BLUE}🚀 Bug Report Triage Service - Podman Setup${NC}"
 echo "================================================"
 
 # Check if .env file exists
@@ -40,7 +40,7 @@ mkdir -p logs
 # Function to start services
 start_infrastructure() {
     echo -e "\n${BLUE}🚀 Starting infrastructure services (Kafka, Redis, UIs)...${NC}"
-    docker-compose up -d zookeeper kafka redis kafka-ui redis-commander
+    podman-compose up -d zookeeper kafka redis kafka-ui redis-commander
     
     echo -e "\n${YELLOW}⏳ Waiting for services to be ready...${NC}"
     echo "This may take 30-60 seconds for Kafka to fully initialize..."
@@ -48,7 +48,7 @@ start_infrastructure() {
     # Wait for Kafka to be ready
     echo -n "Waiting for Kafka: "
     for i in {1..30}; do
-        if docker-compose exec -T kafka kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1; then
+        if podman-compose exec -T kafka kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1; then
             echo -e " ${GREEN}✅${NC}"
             break
         fi
@@ -59,7 +59,7 @@ start_infrastructure() {
     # Wait for Redis to be ready
     echo -n "Waiting for Redis: "
     for i in {1..10}; do
-        if docker-compose exec -T redis redis-cli ping >/dev/null 2>&1; then
+        if podman-compose exec -T redis redis-cli ping >/dev/null 2>&1; then
             echo -e " ${GREEN}✅${NC}"
             break
         fi
@@ -70,7 +70,7 @@ start_infrastructure() {
 
 start_full_service() {
     echo -e "\n${BLUE}🏃 Starting full service (including Bug Triage Service)...${NC}"
-    docker-compose --profile full up -d
+    podman-compose --profile full up -d
     
     echo -e "\n${GREEN}✅ All services started successfully!${NC}"
     show_service_info
@@ -85,10 +85,10 @@ show_service_info() {
     echo -e "💾 Redis:           ${GREEN}localhost:6379${NC}"
     echo ""
     echo -e "${BLUE}📝 Useful Commands:${NC}"
-    echo "• View logs:           docker-compose logs -f"
-    echo "• View service logs:   docker-compose logs -f bug-triage-service"
-    echo "• Stop all:           docker-compose down"
-    echo "• Stop with cleanup:   docker-compose down -v"
+    echo "• View logs:           podman-compose logs -f"
+    echo "• View service logs:   podman-compose logs -f bug-triage-service"
+    echo "• Stop all:           podman-compose down"
+    echo "• Stop with cleanup:   podman-compose down -v"
     echo ""
 }
 
@@ -115,23 +115,23 @@ show_menu() {
             ;;
         3)
             echo -e "\n${YELLOW}🛑 Stopping all services...${NC}"
-            docker-compose down
+            podman-compose down
             echo -e "${GREEN}✅ All services stopped${NC}"
             ;;
         4)
             echo -e "\n${BLUE}📊 Service Status:${NC}"
-            docker-compose ps
+            podman-compose ps
             ;;
         5)
             echo -e "\n${BLUE}📋 Recent logs (Ctrl+C to exit):${NC}"
-            docker-compose logs -f --tail=50
+            podman-compose logs -f --tail=50
             ;;
         6)
             echo -e "\n${RED}🧹 Cleaning up (this will remove all data)...${NC}"
             read -p "Are you sure? (y/N): " confirm
             if [[ $confirm =~ ^[Yy]$ ]]; then
-                docker-compose down -v --remove-orphans
-                docker system prune -f
+                podman-compose down -v --remove-orphans
+                podman system prune -f
                 echo -e "${GREEN}✅ Cleanup completed${NC}"
             else
                 echo -e "${YELLOW}Cleanup cancelled${NC}"
@@ -155,10 +155,10 @@ elif [ "$1" = "full" ]; then
     start_infrastructure
     start_full_service
 elif [ "$1" = "stop" ]; then
-    docker-compose down
+    podman-compose down
 elif [ "$1" = "clean" ]; then
-    docker-compose down -v --remove-orphans
-    docker system prune -f
+    podman-compose down -v --remove-orphans
+    podman system prune -f
 else
     # Interactive mode
     while true; do

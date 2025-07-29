@@ -54,7 +54,7 @@ Coordinator Agent ← Status Updates ← Status Updates ← Status Updates
 
 ## 🛠️ Installation
 
-### Option 1: Docker (Recommended)
+### Option 1: Podman (Recommended)
 
 1. **Clone the repository**
    ```bash
@@ -68,7 +68,7 @@ Coordinator Agent ← Status Updates ← Status Updates ← Status Updates
    # Edit .env with your OpenAI API key (required)
    ```
 
-3. **Start with Docker**
+3. **Start with Podman**
    ```bash
    # Make the script executable (Linux/Mac)
    chmod +x docker-start.sh
@@ -108,14 +108,14 @@ Coordinator Agent ← Status Updates ← Status Updates ← Status Updates
 
 4. **Start external services**
    ```bash
-   # Start Kafka (example with Docker)
-   docker run -d --name kafka -p 9092:9092 \
+   # Start Kafka (example with Podman)
+   podman run -d --name kafka -p 9092:9092 \
      -e KAFKA_ZOOKEEPER_CONNECT=localhost:2181 \
      -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
      confluentinc/cp-kafka:latest
    
-   # Start Redis (example with Docker)
-   docker run -d --name redis -p 6379:6379 redis:alpine
+   # Start Redis (example with Podman)
+   podman run -d --name redis -p 6379:6379 redis:alpine
    ```
 
 ## ⚙️ Configuration
@@ -241,7 +241,127 @@ When a bug report is processed, you'll see output like:
 
 ## 🧪 Testing
 
-### Run the Demo
+The project includes comprehensive test coverage with unit tests, integration tests, and automated CI/CD pipelines.
+
+### Quick Test Commands
+
+```bash
+# Run all tests
+python run_tests.py --all-tests
+
+# Run only unit tests
+python run_tests.py --unit
+
+# Run with coverage
+pytest tests/unit/ --cov=. --cov-report=html
+
+# Run full CI pipeline locally
+python run_tests.py --full
+```
+
+### Test Structure
+
+```
+tests/
+├── conftest.py           # Test fixtures and configuration
+├── unit/                 # Unit tests
+│   ├── test_models.py   # Model validation tests
+│   └── test_bug_report_service.py  # Service logic tests
+└── integration/         # Integration tests
+    └── test_end_to_end.py  # End-to-end workflow tests
+```
+
+### Test Categories
+
+- **Unit Tests**: Test individual components in isolation with mocked dependencies
+- **Integration Tests**: Test component interactions with real or containerized services
+- **End-to-End Tests**: Test complete workflows from bug report submission to GitHub issue creation
+
+### Running Tests
+
+#### Prerequisites
+```bash
+# Install test dependencies
+pip install -r requirements-test.txt
+```
+
+#### Unit Tests
+```bash
+# Run unit tests with coverage
+pytest tests/unit/ -v --cov=. --cov-report=html
+
+# Run specific test file
+pytest tests/unit/test_models.py -v
+
+# Run specific test
+pytest tests/unit/test_models.py::TestBugReport::test_bug_report_creation_valid -v
+```
+
+#### Integration Tests
+```bash
+# Run integration tests (requires running services)
+pytest tests/integration/ -v -m "integration and not slow"
+
+# Run with services (using docker-compose)
+./docker-start.sh infrastructure
+pytest tests/integration/ -v
+```
+
+#### Code Quality Checks
+
+The project uses several tools for code quality:
+
+- **Black**: Code formatting
+- **isort**: Import sorting  
+- **Flake8**: Linting
+- **MyPy**: Type checking
+- **Safety**: Vulnerability scanning
+- **Bandit**: Security linting
+
+```bash
+# Format code
+python run_tests.py --format
+
+# Run all quality checks
+python run_tests.py --lint
+
+# Run security checks
+python run_tests.py --security
+```
+
+### Test Runner Script
+
+The `run_tests.py` script provides convenient commands:
+
+```bash
+# Show all options
+python run_tests.py --help
+
+# Install dependencies
+python run_tests.py --install-deps
+
+# Format code
+python run_tests.py --format
+
+# Run linting
+python run_tests.py --lint
+
+# Run unit tests
+python run_tests.py --unit
+
+# Run integration tests  
+python run_tests.py --integration
+
+# Run security checks
+python run_tests.py --security
+
+# Run complete CI pipeline locally
+python run_tests.py --full
+```
+
+### Demo and Manual Testing
+
+#### Run the Demo
 
 ```bash
 python example_usage.py
@@ -253,13 +373,50 @@ This will:
 3. Simulate the complete workflow
 4. Display example triage results and GitHub issues
 
-### Manual Testing
+#### Manual Testing
 
 1. Start the service: `python bug_report_service.py`
 2. In another terminal, submit test bug reports using the example code
 3. Monitor the logs to see the workflow progression
 4. Check Redis for state persistence
 5. Verify Kafka topics receive messages
+
+### CI/CD Pipeline
+
+The project includes a comprehensive GitHub Actions CI/CD pipeline:
+
+#### Pipeline Jobs
+
+1. **Lint and Format Check**: Code formatting and linting validation
+2. **Unit Tests**: Run on Python 3.9-3.12 with coverage reporting
+3. **Integration Tests**: Full workflow testing with live services
+4. **Podman Tests**: Container compatibility testing
+5. **Security Scan**: Vulnerability and security analysis
+6. **Container Build**: Build and test container images
+
+#### Pipeline Triggers
+
+- Push to `main` or `develop` branches
+- Pull requests to `main` or `develop` branches
+
+#### Pipeline Features
+
+- **Multi-Python Version Testing**: Tests on Python 3.9, 3.10, 3.11, and 3.12
+- **Service Dependencies**: Automatic Kafka and Redis service setup
+- **Podman Support**: Tests container functionality with Podman
+- **Coverage Reporting**: Code coverage analysis and reporting
+- **Security Scanning**: Dependency vulnerability and code security checks
+- **Artifact Collection**: Test reports and security scan results
+- **Caching**: Dependency caching for faster builds
+
+#### Status Badges
+
+Add these badges to track CI status:
+
+```markdown
+![CI Status](https://github.com/your-username/AI-Pipeline/workflows/CI%20Pipeline/badge.svg)
+![Coverage](https://codecov.io/gh/your-username/AI-Pipeline/branch/main/graph/badge.svg)
+```
 
 ## 🔧 Development
 
@@ -363,9 +520,9 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your keys
 
-# 2. Start dependencies (Docker)
-docker run -d -p 9092:9092 --name kafka confluentinc/cp-kafka:latest
-docker run -d -p 6379:6379 --name redis redis:alpine
+# 2. Start dependencies (Podman)
+podman run -d -p 9092:9092 --name kafka confluentinc/cp-kafka:latest
+podman run -d -p 6379:6379 --name redis redis:alpine
 
 # 3. Run demo
 python example_usage.py
