@@ -7,30 +7,31 @@ from bug_report_service import BugReportTriageService
 from models import BugReport, Priority, Severity, TicketStatus
 
 
+@pytest.fixture
+def service_with_mocks():
+    """Create service with mocked external dependencies"""
+    with (
+        patch("confluent_kafka.Producer") as mock_producer,
+        patch("confluent_kafka.Consumer") as mock_consumer,
+        patch("redis.Redis") as mock_redis,
+        patch("openai.OpenAI") as mock_openai,
+        patch("github.Github") as mock_github,
+    ):
+
+        # Setup mocks
+        mock_producer.return_value = Mock()
+        mock_consumer.return_value = Mock()
+        mock_redis.return_value = Mock()
+        mock_openai.return_value = Mock()
+        mock_github.return_value = Mock()
+
+        service = BugReportTriageService()
+        yield service
+
+
 @pytest.mark.integration
 class TestEndToEndIntegration:
     """End-to-end integration tests"""
-
-    @pytest.fixture
-    def service_with_mocks(self):
-        """Create service with mocked external dependencies"""
-        with (
-            patch("kafka_utils.KafkaProducer") as mock_producer,
-            patch("kafka_utils.KafkaConsumer") as mock_consumer,
-            patch("redis.Redis") as mock_redis,
-            patch("openai.OpenAI") as mock_openai,
-            patch("github.Github") as mock_github,
-        ):
-
-            # Setup mocks
-            mock_producer.return_value = Mock()
-            mock_consumer.return_value = Mock()
-            mock_redis.return_value = Mock()
-            mock_openai.return_value = Mock()
-            mock_github.return_value = Mock()
-
-            service = BugReportTriageService()
-            yield service
 
     def test_bug_report_processing_workflow(
         self, service_with_mocks, sample_bug_report
@@ -182,7 +183,7 @@ class TestErrorRecovery:
         service = service_with_mocks
 
         # Simulate Kafka connection failure
-        with patch("kafka_utils.KafkaConsumerManager") as mock_consumer:
+        with patch("confluent_kafka.Consumer") as mock_consumer:
             mock_consumer.side_effect = Exception("Kafka connection failed")
 
             # Service should handle initialization failure gracefully
