@@ -2,33 +2,45 @@
 
 A comprehensive Python service that uses LangChain, OpenAI, and Kafka to automatically read, triage, and create GitHub issues from bug reports. The service implements a multi-agent architecture where different agents handle specific aspects of the bug report processing workflow.
 
-## 🏗️ Architecture
+## 📚 Documentation
 
-The service uses an **agent-based architecture** with **Kafka messaging** for communication between components:
+Comprehensive documentation is available in the `docs/` directory:
 
+- **[🏗️ Architecture Documentation](docs/ARCHITECTURE.md)** - Complete system architecture with detailed Mermaid diagrams
+- **[📋 API Documentation](docs/API.md)** - REST API reference with OpenAPI 3.0 specification
+- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions for Kubernetes, Docker, and cloud platforms
+- **[⚙️ Operations Runbook](docs/OPERATIONS.md)** - Production operations, monitoring, and incident response procedures
+
+## 🏗️ Architecture Overview
+
+The AI Pipeline uses a **multi-agent architecture** with **event-driven processing** through Apache Kafka:
+
+```mermaid
+graph LR
+    BUG[Bug Report] --> TRIAGE[Triage Agent]
+    TRIAGE --> TICKET[Ticket Creation Agent] 
+    TICKET --> GITHUB[GitHub API Agent]
+    GITHUB --> ISSUE[GitHub Issue]
+    
+    COORD[Coordinator Agent] --> TRIAGE
+    COORD --> TICKET
+    COORD --> GITHUB
+    
+    style BUG fill:#e8f5e8
+    style ISSUE fill:#e1f5fe
+    style COORD fill:#f3e5f5
 ```
-Bug Report → Triage Agent → Ticket Creation Agent → GitHub API Agent → GitHub Issue
-     ↓              ↓                  ↓                     ↓
-Coordinator Agent ← Status Updates ← Status Updates ← Status Updates
-```
 
-### Agents
+**Key Components:**
+- **Coordinator Agent**: Workflow orchestration and monitoring
+- **Triage Agent**: AI-powered bug analysis and categorization  
+- **Ticket Creation Agent**: GitHub issue formatting and generation
+- **GitHub API Agent**: Issue creation and API integration
+- **Apache Kafka**: Reliable message passing and event streaming
+- **Redis**: State management and request tracking
+- **OpenAI GPT-4**: Intelligent analysis and content generation
 
-1. **Coordinator Agent**: Manages the overall workflow, handles timeouts, and provides status updates
-2. **Triage Agent**: Analyzes bug reports using OpenAI to determine priority, severity, and categorization
-3. **Ticket Creation Agent**: Creates well-formatted GitHub issues using OpenAI for content generation
-4. **GitHub API Agent**: Handles actual GitHub API calls to create issues (includes mock implementation)
-
-### Communication
-
-- **Kafka Topics**: 
-  - `bug-reports`: New bug reports for triage
-  - `triage-results`: Triaged bug reports ready for ticket creation
-  - `ticket-creation`: Formatted GitHub issues ready for API calls
-  - `status-updates`: Status updates from all agents
-
-- **State Management**: Redis for persistent request state tracking
-- **LLM Integration**: OpenAI GPT-4 via LangChain for intelligent analysis
+For detailed architecture information, see [📋 Architecture Documentation](docs/ARCHITECTURE.md).
 
 ## 🚀 Features
 
