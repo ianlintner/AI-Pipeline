@@ -202,8 +202,7 @@ def show_usage_instructions():
     print("PRODUCTION USAGE INSTRUCTIONS")
     print("=" * 60)
 
-    print(
-        """
+    print("""
 1. SETUP REQUIREMENTS:
    - Kafka cluster running on localhost:9092 (or configure KAFKA_BOOTSTRAP_SERVERS)
    - Redis server running on localhost:6379 (or configure REDIS_URL)  
@@ -266,8 +265,7 @@ def show_usage_instructions():
    - Flexible: Easy to add new agents or modify workflow
    - Observable: Comprehensive logging and status tracking
    - Intelligent: LangChain + OpenAI for smart triage decisions
-"""
-    )
+""")
 
 
 if __name__ == "__main__":
