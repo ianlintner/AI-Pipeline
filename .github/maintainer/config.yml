@@ -37,7 +37,9 @@ issue_agent:
 
 upgrade_agent:
   enabled: true
-  strategy: auto-minor  # auto-minor | auto-patch | latest | pinned
+  strategy: auto-minor  # auto-minor | auto-patch | latest | pinned | manual
+  channel: stable  # stable | preview
+  auto_merge_non_breaking: true
 
 devops_agent:
   enabled: true
@@ -113,3 +115,52 @@ llm:
     - ci_log_analysis
     - architectural_review
     - issue_decomposition
+    - upgrade_impact_analysis
+
+goal_engine:
+  enabled: false
+  goal_driven_dispatch: false
+  divergence_threshold: 3
+  stale_threshold: 5
+  max_history: 20
+
+review_agent:
+  enabled: false
+  mode: scheduled  # scheduled | targeted
+  lookback_runs: 10
+  lookback_days: 30
+  artifact_dir: artifacts/review
+  save_markdown: true
+  save_json: true
+  save_manifest: true
+  publish_summary_comments: false
+  comment_on_prs: true
+  comment_on_issues: true
+  minimum_comment_score: 0
+  use_llm_for_retro: true
+
+memory_store:
+  enabled: true
+  db_path: .caretaker-memory.db
+  snapshot_path: .caretaker-memory-snapshot.json
+  max_entries_per_namespace: 1000
+
+azure:
+  use_managed_identity: false
+
+mcp:
+  enabled: false
+  endpoint: null
+  auth_mode: managed_identity  # none | managed_identity | token | apim
+  timeout_seconds: 30
+  allowed_tools: []
+
+telemetry:
+  enabled: false
+  application_insights_connection_string_env: APPLICATIONINSIGHTS_CONNECTION_STRING
+
+github_app:
+  enabled: false
+  app_id: null
+  private_key_env: CARETAKER_GITHUB_APP_PRIVATE_KEY
+  webhook_secret_env: CARETAKER_GITHUB_APP_WEBHOOK_SECRET
