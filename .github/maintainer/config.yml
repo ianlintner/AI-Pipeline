@@ -85,6 +85,21 @@ charlie_agent:
     - maintainer:escalated
     - maintainer:escalation-digest
 
+principal_agent:
+  enabled: false
+
+test_agent:
+  enabled: false
+
+refactor_agent:
+  enabled: false
+
+performance_agent:
+  enabled: false
+
+migration_agent:
+  enabled: false
+
 stale_agent:
   enabled: true
   stale_days: 60
