@@ -134,7 +134,11 @@ fleet_registry:
 
 llm:
   provider: litellm
+  # Must be a quoted string "false"/"true"/"auto" (not YAML boolean) — required by pydantic schema.
+  # Set to "false" because this repo uses Azure AI (AZURE_AI_API_KEY), not direct Anthropic.
   claude_enabled: "false"
+  # Empty string clears the default "claude-sonnet-4-5" model, which would otherwise
+  # cause litellm mode to still require ANTHROPIC_API_KEY even with claude_enabled: "false".
   default_model: ""
   claude_features:
     - ci_log_analysis
